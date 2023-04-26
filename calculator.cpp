@@ -5,7 +5,6 @@
 #include <math.h>
 #include <bits/stdc++.h>
 
-
 Calculator::Calculator(QObject *parent)
 {
 
@@ -47,8 +46,8 @@ double Calculator::numberInputFunction(int index){
         perCentFunction();
         break;
     case 3:  // /
-        _operation = 4; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
-        setOperationHighlight(_operation);
+        _op = DIV; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
+        setOperationHighlight(_op);
         _numberString = "";
         break;
     case 4:  // 7
@@ -61,8 +60,8 @@ double Calculator::numberInputFunction(int index){
         convertNumberFunction("9");
         break;
     case 7:  // *
-        _operation = 3; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
-        setOperationHighlight(_operation);
+        _op = MUL; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
+        setOperationHighlight(_op);
         _numberString = "";
         break;
     case 8:  // 4
@@ -75,8 +74,8 @@ double Calculator::numberInputFunction(int index){
         convertNumberFunction("6");
         break;
     case 11: // -
-        _operation = 2; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
-        setOperationHighlight(_operation);
+        _op = SUB; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
+        setOperationHighlight(_op);
         _numberString = "";
         break;
     case 12: // 1
@@ -89,22 +88,22 @@ double Calculator::numberInputFunction(int index){
         convertNumberFunction("3");
         break;
     case 15: // +
-        _operation = 1; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
-        setOperationHighlight(_operation);
+        _op = ADD; //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
+        setOperationHighlight(_op);
         _numberString = "";
         break;
     case 16: // 0
         convertNumberFunction("0");
         break;
     case 17: // ,
-        if(_numberString.find('.')!= std::string::npos){
-
+        if(_numberString.contains('.')){
+            //Number already contains a komma
         }else{
             convertNumberFunction(".");
         }
         break;
     case 18: // =
-        switch(_operation){ //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
+        switch(_op){ //0="NOP"; 1="+" ; 2="-" ; 3="*"; 4="/"
         case 0:
             break;
         case 1:
@@ -132,10 +131,10 @@ double Calculator::numberInputFunction(int index){
 
     qDebug()<< "Akku1    : " << _akku_1;
     qDebug()<< "Akku2    : " << _akku_2;
-    qDebug()<< "Operation: " << _operation;
+    qDebug()<< "Operation: " << _op;
     qDebug()<< "OP HL    : " << _operationHighlight;
 
-    if(_akku_1 != 0 || (_akku_2 != 0 && _operation>0)){
+    if(_akku_1 != 0 || (_akku_2 != 0 && _op>0)){
         setAcButton(1);
     }else{
         setAcButton(0);
@@ -147,26 +146,26 @@ double Calculator::numberInputFunction(int index){
 
 double Calculator::roundNumber(double num, int numOfDecimalPlaces){
 
-//    num = num * std::pow(10,numOfDecimalPlaces);
-//    num = int(num);
+    //    num = num * std::pow(10,numOfDecimalPlaces);
+    //    num = int(num);
     return num;//(num / std::pow(10,numOfDecimalPlaces));
 }
 
 void Calculator::displayClickedFunction(){
 
     int len = _numberString.length();
-    if(_operation==0){
+    if(_op == NOP){
         if(len == 1){
             _numberString =  "0";
             _akku_1 = 0;
             setDisplayTXT(_akku_1);
 
         }else if(len > 1){
-            _numberString =  _numberString.substr(0,len-1);
-            if(_numberString.substr(len-2,len-1) == "."){
-                _numberString =  _numberString.substr(0,len-2);
+            _numberString =  _numberString.left(len-1);//.substr(0,len-1);
+            if(_numberString.right(0) == "."){
+                _numberString =  _numberString.left(len-2);
             }
-            _akku_1 =  std::stod(_numberString);
+            _akku_1 =  _numberString.toDouble();
             setDisplayTXT(_akku_1);
         }
     }else{
@@ -177,11 +176,11 @@ void Calculator::displayClickedFunction(){
             setDisplayTXT(_akku_2);
 
         }else if(len > 1){
-            _numberString =  _numberString.substr(0,len-1);
-            if(_numberString.substr(len-2,len-1) == "."){
-                _numberString =  _numberString.substr(0,len-2);
+            _numberString =  _numberString.left(len-1);
+            if(_numberString.right(0) == "."){
+                _numberString =  _numberString.left(len-2);
             }
-            _akku_2 =  std::stod(_numberString);
+            _akku_2 =  _numberString.toDouble();
             setDisplayTXT(_akku_2);
         }
 
@@ -189,13 +188,13 @@ void Calculator::displayClickedFunction(){
 
 }
 
-void Calculator::convertNumberFunction(std::string symbol){
+void Calculator::convertNumberFunction(QString symbol){
 
     _numberString = _numberString + symbol ;
-    if(_operation==0){
-        _operationHighlight = _operation;
+    if(_op == NOP){
+        _operationHighlight = _op;
         setOperationHighlight(_operationHighlight);
-        _akku_1 = std::stod(_numberString);
+        _akku_1 = _numberString.toDouble();
         setDisplayTXT(_akku_1);
 
     }
@@ -203,7 +202,7 @@ void Calculator::convertNumberFunction(std::string symbol){
         _operationHighlight = 0;
         setOperationHighlight(_operationHighlight);
         //_operation = 0;
-        _akku_2 = std::stod(_numberString);
+        _akku_2 = _numberString.toDouble();
         setDisplayTXT(_akku_2);
     }
 
@@ -228,76 +227,69 @@ void  Calculator::divFunction(){
 
 void  Calculator::acFunction(){
 
-    if(_operation > 0 && _akku_2 != 0){
+    if(_op > NOP && _akku_2 != 0){
         //C Befehl AKKU 2
         _numberString = "";
         _akku_2 = 0;
         setDisplayTXT(_akku_2);
-        setOperationHighlight(_operation);
+        setOperationHighlight(_op);
 
-    }else if(_operation > 0 && _akku_2 == 0){
+    }else if(_op > NOP && _akku_2 == 0){
         // AC Befehl
         _numberString = "";
         _akku_2 = 0;
         _akku_1 = 0;
         setDisplayTXT(_akku_1);
-        _operation = 0;
-        setOperationHighlight(_operation);
+        _op = NOP;
+        setOperationHighlight(_op);
 
 
-    }else if(_operation == 0 && _akku_2 == 0){
+    }else if(_op == NOP && _akku_2 == 0){
         // AC Befehl
         _numberString = "";
         _akku_2 = 0;
         _akku_1 = 0;
         setDisplayTXT(_akku_1);
-        _operation = 0;
-        setOperationHighlight(_operation);
+        _op = NOP;
+        setOperationHighlight(_op);
 
     }
 
 }
 
 void  Calculator::signFunction(){
-    if(_operation==0){
+    if(_op == NOP){
         _akku_1 = _akku_1*(-1);
         setDisplayTXT(_akku_1);
-        _numberString =  std::to_string(_akku_1);
+        _numberString =  QString::number(_akku_1);
     }
     else{
         _akku_2 = _akku_2*(-1);
         setDisplayTXT(_akku_2);
-        _numberString =  std::to_string(_akku_2);
+        _numberString =  QString::number(_akku_2);
     }
 }
 
 void  Calculator::perCentFunction(){
     qDebug()<< "percent: " << _akku_1;
-    if(_operation==0){
+    if(_op == NOP){
         _akku_1 = roundNumber(_akku_1*(0.01),5);
         setDisplayTXT(_akku_1);
-        _numberString =  std::to_string(_akku_1);
+        _numberString =  QString::number(_akku_1);
 
         int i = _numberString.length();
-        for(i; i>0 && (_numberString.substr(i-1,i-1)=="0"||_numberString.substr(i-1,i-1)=="." ); i--){
-            _numberString =  _numberString.substr(0,i-1);
+        for(i; i>0 && (_numberString.mid(i-1,i-1)=="0"||_numberString.mid(i-1,i-1)=="." ); i--){
+            _numberString =  _numberString.mid(0,i-1);
         }
     }
     else{
         _akku_1 = roundNumber(_akku_2*(0.01),5);
         setDisplayTXT(_akku_2);
-        _numberString =  std::to_string(_akku_2);
+        _numberString =  QString::number(_akku_2);
 
         int i = _numberString.length();
-        for(i; i>0 && (_numberString.substr(i-1,i-1)=="0"||_numberString.substr(i-1,i-1)=="." ); i--){
-            _numberString =  _numberString.substr(0,i-1);
+        for(i; i>0 && (_numberString.mid(i-1,i-1)=="0"||_numberString.mid(i-1,i-1)=="." ); i--){
+            _numberString =  _numberString.mid(0,i-1);
         }
     }
 }
-
-
-
-
-
-
-
